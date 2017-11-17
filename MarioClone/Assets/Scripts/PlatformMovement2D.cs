@@ -5,6 +5,10 @@ using UnityEngine;
 using UniRx;
 
 public class PlatformMovement2D : CharacterMotor2D {
+	public Vector2 GroundContactNormal;
+	public Vector2 WallLeftContactNormal;
+	public Vector2 WallRightContactNormal;
+	public Vector2 CeilingContactNormal;
 	private Vector2 _groundContactNormal;
 	private Vector2 _wallLeftContactNormal;
 	private Vector2 _wallRightContactNormal;
@@ -53,9 +57,6 @@ public class PlatformMovement2D : CharacterMotor2D {
 		OnCollisionGroundEvent.Subscribe(OnGroundCollision);
 		OnCollisionWallLeftEvent.Subscribe(OnWallLeftCollision);
 		OnCollisionWallRightEvent.Subscribe(OnWallRightCollision);
-
-		OnLandOnGroundEvent.Subscribe(x => 
-			Debug.Log(x.Position));
 	}
 
 	private void OnGroundCollision(ByteBrosCollision2D collision) {
@@ -83,6 +84,42 @@ public class PlatformMovement2D : CharacterMotor2D {
 		}
 	}
 
+	void UpdateNormals() {
+		if (!WallRight.IsOn) {
+			WallRightContactNormal = Vector3.left;
+		}
+		if (!Ground.IsOn) {
+			GroundContactNormal = Vector3.up;
+		}
+		if (!WallLeft.IsOn) {
+			WallLeftContactNormal = Vector3.right;
+		}
+		if (!Ceiling.IsOn) {
+			CeilingContactNormal = Vector3.down;
+		}
+		if (_groundContactNormal.sqrMagnitude != 0f)
+		{
+			GroundContactNormal = _groundContactNormal.normalized;
+		}
+		if (_ceilingContactNormal.sqrMagnitude != 0f)
+		{
+			CeilingContactNormal = _ceilingContactNormal.normalized; 
+		}
+		if (_wallLeftContactNormal.sqrMagnitude != 0f)
+		{
+			WallLeftContactNormal = _wallLeftContactNormal.normalized;
+		}
+		if (_wallRightContactNormal.sqrMagnitude != 0f)
+		{
+			WallRightContactNormal = _wallRightContactNormal.normalized;
+		}
+
+		_groundContactNormal = Vector2.zero;
+		_ceilingContactNormal = Vector2.zero;
+		_wallRightContactNormal = Vector2.zero;
+		_wallLeftContactNormal = Vector2.zero;
+	}
+
 	void FixedUpdate() {
 		LocalSpeed = _gravity.TransformVelocity(LocalSpeed);
 
@@ -105,8 +142,34 @@ public class PlatformMovement2D : CharacterMotor2D {
 
 		Move(LocalSpeed * Time.deltaTime);
 		UpdateRays();
+		
+		// Correct For Approximate Movement
+
+		if (IsOnGround) {
+			Debug.DrawRay(transform.position, GroundContactNormal * -0.4f, Color.red);
+			var groundNormalTest = TestMovement(GroundContactNormal * -0.4f);
+			if (groundNormalTest.HasCollision) {
+				this.Position += groundNormalTest.Distance * groundNormalTest.Direction;
+				OnCollisionNext(groundNormalTest.Collision);
+			}
+
+			if (HasWallLeft) {
+				var wallLeftTest = TestMovement(WallLeftContactNormal * -0.4f);
+				if (wallLeftTest.HasCollision) {
+					OnCollisionNext(wallLeftTest.Collision);
+				}
+			}
+
+			if (HasWallRight) {
+				var wallRightTest = TestMovement(WallRightContactNormal * -0.4f);
+				if (wallRightTest.HasCollision) {
+					OnCollisionNext(wallRightTest.Collision);
+				}
+			}
+		}
 
 		PostFixedUpdate();
+		UpdateNormals();
 	}
 
 	public void PostFixedUpdate() {
@@ -114,6 +177,4 @@ public class PlatformMovement2D : CharacterMotor2D {
 		WallLeft.Update();
 		WallRight.Update();
 	}
-
-	
 }

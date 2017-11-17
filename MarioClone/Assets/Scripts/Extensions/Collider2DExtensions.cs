@@ -6,7 +6,8 @@ public static class Collider2DExtensions {
 	
 	public static MotionTestResult TestMotion (
 		this Collider2D collider,
-		Vector2 motion) 
+		Vector2 motion,
+		float margin = 0f) 
 	{
 		var collisionBox = collider.GetCollisionBox();
 
@@ -31,8 +32,8 @@ public static class Collider2DExtensions {
 				HasCollision = true,
 				Collision = collision2d,
 				Direction = motion.normalized,
-				Distance = raycastHit2d.distance,
-				Remainder = motion.magnitude - raycastHit2d.distance
+				Distance = raycastHit2d.distance - margin,
+				Remainder = motion.magnitude - raycastHit2d.distance + margin
 			};
 		}
 

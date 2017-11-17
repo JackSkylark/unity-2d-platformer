@@ -31,16 +31,14 @@ public abstract class CharacterMotor2D : MonoBehaviour {
 	}
 
     public MotionTestResult TestMovement(Vector2 delta) {
-        return _collider.TestMotion(delta);
+        return _collider.TestMotion(delta, CollisionMargin);
     }
 
     public void Move(Vector2 delta) {
         var motionTest = TestMovement(delta);
 		if (motionTest.HasCollision) {
 			var normal = motionTest.Collision.Normal;
-			var num = motionTest.Distance - CollisionMargin;
-
-			Position += num * delta.normalized;
+			Position += motionTest.Distance * delta.normalized;
             _onCollision.OnNext(motionTest.Collision);
 			var remainderMovementDelta = motionTest.Remainder * motionTest.Direction;
 
