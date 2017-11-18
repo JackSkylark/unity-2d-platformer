@@ -140,13 +140,17 @@ public class PlatformMovement2D : CharacterMotor2D {
 			LocalSpeed.y = 0f;
 		}
 
+		if (IsOnGround && Input.GetButtonDown("Jump")) {
+			LocalSpeed.y = 10f;
+		}
+
 		Move(LocalSpeed * Time.deltaTime);
 		UpdateRays();
 		
 		// Correct For Approximate Movement
 
 		if (IsOnGround) {
-			Debug.DrawRay(transform.position, GroundContactNormal * -0.4f, Color.red);
+			//Debug.DrawRay(transform.position, GroundContactNormal * -0.4f, Color.red);
 			var groundNormalTest = TestMovement(GroundContactNormal * -0.4f);
 			if (groundNormalTest.HasCollision) {
 				this.Position += groundNormalTest.Distance * groundNormalTest.Direction;
